@@ -1,65 +1,88 @@
 package com.alura.conversordemoneda;
 
-import com.google.gson.Gson;
+import com.alura.conversordemoneda.Modelos.CodeAndRates;
+import com.alura.conversordemoneda.Servicios.ConexionApi;
+import com.alura.conversordemoneda.Servicios.FuncionesConversor;
+import com.alura.conversordemoneda.Menu.Menuapp;
+
 import java.util.Scanner;
-import java.io.IOException;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-
-
 
 public class ConversorApp {
 
-    public static void main(String[] args) throws IOException, InterruptedException {
+    private static final String[] MONEDAS_FILTRADAS = {"ARS", "BOB", "BRL", "CLP", "COP", "USD"};
 
-        String direccionapi = "https://v6.exchangerate-api.com/v6/03ab53d9d347483a80fae46e/latest/USD";
+    public static void main(String[] args) {
 
-        HttpClient client = HttpClient.newHttpClient();
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(direccionapi))
-                .build();
-        HttpResponse<String> response = client
-                .send(request, HttpResponse.BodyHandlers.ofString());
-        String json = response.body();
-        System.out.println(json);
-
-        Gson gson = new Gson();
-        CodeAndRates exchangeRate = gson.fromJson(json, CodeAndRates.class);
-        System.out.println("=== Tasas Filtradas ===");
-
-        String[] monedasFiltrar = {"ARS", "BOB", "BRL", "CLP", "COP", "USD"};
-
-        for (String codigo : monedasFiltrar) {
-            Double valor = exchangeRate.getConversion_rates().get(codigo);
-            if (valor != null) {
-                System.out.println(codigo + ": " + valor);
-            } else {
-                System.out.println(codigo + ": No disponible");
-            }
-        }
         Scanner scanner = new Scanner(System.in);
-        System.out.println("\n=== Conversión de Monedas ===");
-        System.out.print("Moneda origen (ej: USD): ");
-        String origen = scanner.nextLine().toUpperCase();
+        ConexionApi api = new ConexionApi();
+        FuncionesConversor conversor = new FuncionesConversor();
 
-        System.out.print("Moneda destino (ej: CLP): ");
-        String destino = scanner.nextLine().toUpperCase();
+        CodeAndRates tasa = null;
 
-        System.out.print("Monto a convertir: ");
-        double monto = scanner.nextDouble();
+        // cargar tasas
+        try {
+            tasa = api.fetchRates();
+            System.out.println("Tasas cargadas correctamente.\n");
+        } catch (Exception e) {
+            System.out.println("No fue posible cargar las tasas al inicio.");
+        }
 
-        double convertido = convertir(origen, destino, monto, exchangeRate);
+        boolean salir = false;
 
-        System.out.println("\nRESULTADO:");
-        System.out.println(monto + " " + origen + " = " + convertido + " " + destino);
-    }
-    public static double convertir(String origen, String destino, double monto, CodeAndRates er) {
-        double tasaOrigen = er.getConversion_rates().get(origen);
-        double tasaDestino = er.getConversion_rates().get(destino);
+        while (!salir) {
 
-        // Conversión: monto en destino = (monto / tasaOrigen) * tasaDestino
-        return (monto / tasaOrigen) * tasaDestino;
+            Menuapp.mostrarMenu();
+            String opcion = scanner.nextLine();
+
+            switch (opcion) {
+                case "1":
+                    if (tasa != null) conversor.mostrarTasasFiltradas(tasa, MONEDAS_FILTRADAS);
+                    else System.out.println("Sin tasas cargadas.");
+                    break;
+
+                case "2":
+                    if (tasa != null)
+                        tasa.getConversion_rates().forEach((k, v) -> System.out.println(k + " -> " + v));
+                    else
+                        System.out.println("Sin tasas cargadas.");
+                    break;
+
+                case "3":
+                    if (tasa != null) {
+                        System.out.print("Eliga el tipo de moneda origen, Ejemplo USD. Ingrese su opcion de moneda: ");
+                        String origen = scanner.nextLine().toUpperCase();
+
+                        System.out.print("Eliga el tipo de moneda destino, Ejemplo ARS. Ingrese su opcion de moneda: ");
+                        String destino = scanner.nextLine().toUpperCase();
+
+                        System.out.print("Ingrese el Monto que quiere convertir: $");
+                        double monto = Double.parseDouble(scanner.nextLine());
+
+                        double resultado = conversor.convertir(origen, destino, monto, tasa);
+                        System.out.println("\nSu resultado es: " + resultado + " Este es valor de convertir: " + monto +
+                                " de origen " + origen + " y convertirlo a destino " + destino);
+                    }
+                    break;
+
+                case "4":
+                    try {
+                        tasa = api.fetchRates();
+                        System.out.println("Tasas actualizadas correctamente.");
+                    } catch (Exception e) {
+                        System.out.println("Error al actualizar.");
+                    }
+                    break;
+
+                case "0":
+                    salir = true;
+                    System.out.println("¡Adiós muchas gracias por utilizar el servicio!");
+                    break;
+
+                default:
+                    System.out.println("Opción inválida.");
+            }
+
+            System.out.println();
+        }
     }
 }

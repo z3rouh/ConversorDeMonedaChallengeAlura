@@ -1,8 +1,7 @@
-package com.alura.conversordemoneda;
+package com.alura.conversordemoneda.Modelos;
 
 import java.util.Map;
 
-// Esta clase representa el JSON que devuelve la API
 public class CodeAndRates {
     private String base_code;
     private Map<String, Double> conversion_rates;
