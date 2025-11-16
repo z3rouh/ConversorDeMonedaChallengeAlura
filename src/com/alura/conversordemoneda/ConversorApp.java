@@ -19,7 +19,6 @@ public class ConversorApp {
 
         CodeAndRates tasa = null;
 
-        // cargar tasas
         try {
             tasa = api.fetchRates();
             System.out.println("Tasas cargadas correctamente.\n");
@@ -36,15 +35,18 @@ public class ConversorApp {
 
             switch (opcion) {
                 case "1":
-                    if (tasa != null) conversor.mostrarTasasFiltradas(tasa, MONEDAS_FILTRADAS);
-                    else System.out.println("Sin tasas cargadas.");
+                    if (tasa != null){
+                        conversor.mostrarTasasFiltradas(tasa, MONEDAS_FILTRADAS);
+                    }else { System.out.println("Sin tasas cargadas.");
+                    }
                     break;
-
                 case "2":
-                    if (tasa != null)
+                    if (tasa != null){
+                        System.out.println("\n ⌗⌗⌗⌗ Mostrando todas las monedas disponibles en la API ⌗⌗⌗⌗");
                         tasa.getConversion_rates().forEach((k, v) -> System.out.println(k + " -> " + v));
-                    else
+                    }else{
                         System.out.println("Sin tasas cargadas.");
+                    }
                     break;
 
                 case "3":
@@ -65,12 +67,7 @@ public class ConversorApp {
                     break;
 
                 case "4":
-                    try {
-                        tasa = api.fetchRates();
-                        System.out.println("Tasas actualizadas correctamente.");
-                    } catch (Exception e) {
-                        System.out.println("Error al actualizar.");
-                    }
+                    conversor.mostrarHistorial();
                     break;
 
                 case "0":
